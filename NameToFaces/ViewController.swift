@@ -28,11 +28,12 @@ class ViewController: UICollectionViewController {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Person", for: indexPath) as? PersonCell else {
             fatalError("Error, could not make cell a PersonCell")
         }
-        let person  = people[indexPath.item]
-        cell.name.text   = person.name
+        let person                          = people[indexPath.item]
+        cell.name.text                      = person.name
         
-        let path         = getDocumentsDirectory().appendingPathComponent(person.image)
-        cell.imageView.image    = UIImage(contentsOfFile: path.path)
+        let path                            = getDocumentsDirectory().appendingPathComponent(person.image)
+        cell.imageView.image                = UIImage(contentsOfFile: path.path)
+        
         cell.imageView.layer.borderColor    = UIColor(white: 0, alpha: 0.3).cgColor
         cell.imageView.layer.borderWidth    = 2
         cell.imageView.layer.cornerRadius   = 3
@@ -42,7 +43,31 @@ class ViewController: UICollectionViewController {
     }
     
     
-    
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let person  = people[indexPath.item]
+        
+        let ac      = UIAlertController(title: "What's this person's name?", message: nil, preferredStyle: .alert)
+        ac.addTextField()
+        ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        ac.addAction(UIAlertAction(title: "Ok", style: .default) { [weak self, weak ac ] _ in
+            guard let self      = self else { return }
+            guard let newName   = ac?.textFields?[0].text else { return }
+            person.name         = newName
+            self.collectionView.reloadData()
+            
+        })
+        
+        let aCon    = UIAlertController(title: "Edit person", message: "What do you want to do?", preferredStyle: .alert)
+        aCon.addAction(UIAlertAction(title: "Edit name", style: .default){ [weak self] _ in
+            guard let self  = self else { return }
+            self.present(ac, animated: true)
+        })
+        aCon.addAction(UIAlertAction(title: "Delete Person", style: .destructive){[ weak self ] _ in
+            guard let self = self else { return }
+            self.deleteCell(indexPath: indexPath)
+        })
+        present(aCon, animated: true)
+    }
     
     
     @objc func addNewPerson() {
@@ -50,6 +75,11 @@ class ViewController: UICollectionViewController {
         picker.allowsEditing    = true
         picker.delegate         = self
         present(picker, animated: true)
+    }
+    
+    func deleteCell(indexPath: IndexPath) {
+        people.remove(at: indexPath.item)
+        collectionView.reloadData()
     }
 }
 
