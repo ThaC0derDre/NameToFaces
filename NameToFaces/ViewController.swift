@@ -9,16 +9,28 @@ import UIKit
 
 class ViewController: UICollectionViewController {
     
-    var people  = [Person]()
+    let defaults    = UserDefaults.standard
+    var people      = [Person]()
 
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         navigationItem.leftBarButtonItem    = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
+        
+        if let savedPeople  = defaults.object(forKey: "people") as? Data {
+            let jsonDecoder = JSONDecoder()
+            do {
+                people      = try jsonDecoder.decode([Person].self, from: savedPeople)
+            } catch {
+                print("Error retrieving Data")
+            }
+        }
+        
     }
-
-
+        
+    
+    
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return people.count
     }
@@ -53,6 +65,7 @@ class ViewController: UICollectionViewController {
             guard let self      = self else { return }
             guard let newName   = ac?.textFields?[0].text else { return }
             person.name         = newName
+            self.save()
             self.collectionView.reloadData()
             
         })
@@ -79,6 +92,7 @@ class ViewController: UICollectionViewController {
     
     func deleteCell(indexPath: IndexPath) {
         people.remove(at: indexPath.item)
+        save()
         collectionView.reloadData()
     }
 }
@@ -97,6 +111,7 @@ extension ViewController: UIImagePickerControllerDelegate, UINavigationControlle
         }
         let person          = Person(name: "Unknown", image: imageName)
         people.append(person)
+        save()
         collectionView.reloadData()
         dismiss(animated: true)
     }
@@ -106,5 +121,17 @@ extension ViewController: UIImagePickerControllerDelegate, UINavigationControlle
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0]
     }
+    
+    
+    func save() {
+        let jsonEncoder     = JSONEncoder()
+        
+        if let savedData    = try? jsonEncoder.encode(people){
+        defaults.set(savedData, forKey: "people")
+        }else {
+            print("Failed to save people")
+        }
+    }
+    
 }
 
